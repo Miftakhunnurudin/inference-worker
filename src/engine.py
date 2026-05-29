@@ -21,6 +21,7 @@ Typical usage:
 """
 
 import json
+import os
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -28,7 +29,7 @@ from utils import JobInput
 
 client = OpenAI(
     base_url="http://localhost:3098/v1/",
-    api_key="",
+    api_key=os.getenv("OPENAI_API_KEY", "sk-local-llama-cpp"),
 )
 
 
