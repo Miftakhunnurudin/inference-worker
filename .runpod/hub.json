@@ -17,18 +17,19 @@
                     "name": "Command line arguments for llama-server",
                     "type": "string",
                     "description": "Launch command line arguments (argv) for the llama-server binary. Do not define the port. If using caching, do not define -hf or -m here.",
-                    "default": "-hf unsloth/gemma-3-270m-it-GGUF:Q6_K --ctx-size 4096 -ngl 999",
+                    "default": "--ctx-size 4096 -ngl 999",
                     "advanced": false
                 }
             },
             {
                 "key": "LLAMA_CACHED_MODEL",
                 "input": {
-                    "name": "Hugging Face Hub model name for cached model",
-                    "type": "string",
-                    "description": "Hugging Face Hub model name to use for the cached GGUF model. Leave empty to disable caching. Example: user/model-name",
-                    "default": "",
-                    "advanced": true
+                    "type": "huggingface",
+                    "name": "RunPod Cached Model",
+                    "description": "Hugging Face model repository used for cache lookup and fallback download. Also set the endpoint Model field to the same repository (or Hugging Face URL) for RunPod managed caching.",
+                    "default": "unsloth/gemma-3-270m-it-GGUF",
+                    "required": true,
+                    "advanced": false
                 }
             },
             {
@@ -37,7 +38,17 @@
                     "name": "Path to GGUF file in the Hugging Face Hub model repository",
                     "type": "string",
                     "description": "Path to the GGUF file in the Hugging Face Hub model repository to use for caching. Example: model.gguf",
-                    "default": "",
+                    "default": "gemma-3-270m-it-Q8_0.gguf",
+                    "advanced": false
+                }
+            },
+            {
+                "key": "LLAMA_CACHE_MISS_FALLBACK",
+                "input": {
+                    "name": "Cache miss fallback mode",
+                    "type": "string",
+                    "description": "Behavior when cached model path is not found. Set to 'download' to download from Hugging Face automatically, or 'fail' to stop startup.",
+                    "default": "download",
                     "advanced": true
                 }
             },

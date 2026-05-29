@@ -24,7 +24,14 @@ async def handler(job: Any):
     (LlamaCPP or OpenAI), and yields generated output in a streaming manner.
     """
 
-    job_input = JobInput(job["input"])
+    try:
+        raw_input = job.get("input", {}) if isinstance(job, dict) else {}
+        job_input = JobInput(raw_input)
+        job_input.validate()
+    except Exception as e:
+        yield {"error": str(e)}
+        return
+
     engine_class = (
         LlamaCPPOpenAIEngine if job_input.openai_route else LlamaCPPEngine
     )

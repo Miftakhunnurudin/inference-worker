@@ -21,7 +21,46 @@ class JobInput:
         - openai_input: None
         """
 
+        if not isinstance(job, dict):
+            raise ValueError("input must be a JSON object")
+
         self.llm_input = job.get("messages", job.get("prompt"))
         self.stream = job.get("stream", False)
         self.openai_route = job.get("openai_route")
         self.openai_input = job.get("openai_input")
+
+        self.inference_kwargs = {
+            k: v
+            for k, v in job.items()
+            if k
+            not in {
+                "prompt",
+                "messages",
+                "stream",
+                "openai_route",
+                "openai_input",
+            }
+        }
+
+    def validate(self):
+        if self.openai_route:
+            if self.openai_route not in {
+                "/v1/models",
+                "/v1/chat/completions",
+                "/v1/completions",
+            }:
+                raise ValueError("openai_route is invalid")
+            if (
+                self.openai_route != "/v1/models"
+                and not isinstance(self.openai_input, dict)
+            ):
+                raise ValueError(
+                    "openai_input must be a JSON object for this route"
+                )
+            return
+
+        if self.llm_input is None:
+            raise ValueError("input must include either 'prompt' or 'messages'")
+
+        if not isinstance(self.stream, bool):
+            raise ValueError("stream must be a boolean")

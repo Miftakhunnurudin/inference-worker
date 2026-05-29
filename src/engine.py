@@ -97,35 +97,42 @@ class LlamaCPPEngine:
 
         openAIEngine = LlamaCPPOpenAIEngine()
 
-        # Get model to use (defaults to first model in list of models)
-        model = client.models.list().data[0].id
+        try:
+            # Get model to use (defaults to first model in list of models)
+            model = client.models.list().data[0].id
+        except Exception as e:
+            yield {"error": f"failed to fetch models: {e}"}
+            return
 
-        # Depending if prompt is a string or a list, we need to handle it
-        # differently and send it to the OpenAI API
+        openai_input = {
+            "model": model,
+            "stream": job_input.stream,
+            **job_input.inference_kwargs,
+        }
+
         if isinstance(job_input.llm_input, str):
-            # Build new JobInput object with the OpenAI route and input
             openAIjob = JobInput(
                 {
                     "openai_route": "/v1/completions",
                     "openai_input": {
-                        "model": model,
+                        **openai_input,
                         "prompt": job_input.llm_input,
-                        "stream": job_input.stream,
                     },
                 }
             )
-        else:
-            # Build new JobInput object with the OpenAI route and input
+        elif isinstance(job_input.llm_input, list):
             openAIjob = JobInput(
                 {
                     "openai_route": "/v1/chat/completions",
                     "openai_input": {
-                        "model": model,
+                        **openai_input,
                         "messages": job_input.llm_input,
-                        "stream": job_input.stream,
                     },
                 }
             )
+        else:
+            yield {"error": "messages must be a list or prompt must be a string"}
+            return
 
         print("Generating response for job_input:", job_input)
         print("OpenAI job:", openAIjob)

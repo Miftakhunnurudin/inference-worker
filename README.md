@@ -25,8 +25,17 @@ To get the best performance out of this worker, it is recommended to use cached 
 
 The worker can be configured via environment variables set in the RunPod hub configuration:
 
-- `LLAMA_SERVER_CMD_ARGS`: Command line arguments (argv) for the `llama-server` binary. Example: `-hf /path/to/model.gguf:Q4_K_M --ctx-size 4096`. **IMPORTANT**: Please do not define the port argument here, as the worker will always use port `3098` automatically.
+Important: to use RunPod managed cached models, you must also set the endpoint **Model** field in RunPod to the same Hugging Face repository as `LLAMA_CACHED_MODEL`.
+
+If you deploy from the RunPod Hub listing in this repository, `LLAMA_CACHED_MODEL` is exposed as a Hugging Face selector field named `RunPod Cached Model` in `.runpod/hub.json`.
+
+- `LLAMA_SERVER_CMD_ARGS`: Non-model command line arguments (argv) for the `llama-server` binary. Example: `--ctx-size 4096 -ngl 999`. **IMPORTANT**: Please do not define `--port`, `-m`, `-hf`, or `-hff` here.
+- `LLAMA_CACHED_MODEL`: Hugging Face model ID used for cached model lookup and optional fallback download.
+- `LLAMA_CACHED_GGUF_PATH`: GGUF file path inside the Hugging Face model repository. Recommended to keep fallback deterministic.
+- `LLAMA_CACHE_MISS_FALLBACK`: Behavior when cached model lookup fails. Supported values: `download` (default) and `fail`.
 - `MAX_CONCURRENCY`: Maximum number of concurrent requests the worker can handle. Default is `8`.
+
+When using cached models, do not include `-m`, `-hf`, or `-hff` in `LLAMA_SERVER_CMD_ARGS`. The worker will generate those arguments automatically.
 
 ## License
 

@@ -50,9 +50,17 @@ We will now integrate this into our workflow. Hang tight.
 
     Example: For the model `unsloth/gemma-3-270m-it-GGUF`, you would enter `https://huggingface.co/unsloth/gemma-3-270m-it-GGUF`.
 
-2.  Now, in the environment variables, do NOT enter the `-hf` argument as before and also do NOT define `-m` in the `LLAMA_SERVER_CMD_ARGS`. The inference worker will take care of that for you.
+    This step is required for RunPod managed model caching. Setting only `LLAMA_CACHED_MODEL` in environment variables is not enough.
+
+2.  Now, in the environment variables, do NOT enter `-hf`, `-hff`, or `-m` in the `LLAMA_SERVER_CMD_ARGS`. The inference worker will take care of that for you.
 
     Instead, set the `LLAMA_CACHED_MODEL` to the model ID, a.e. `unsloth/gemma-3-270m-it-GGUF`. Then, set the `LLAMA_CACHED_GGUF_PATH` to the path of the GGUF file in the repository, e.g. `gemma-3-270m-it-Q8_0.gguf`.
+
+    In this repository's Hub configuration, `LLAMA_CACHED_MODEL` is exposed as a Hugging Face input field named `RunPod Cached Model`.
+
+    You can also configure `LLAMA_CACHE_MISS_FALLBACK`:
+    - `download` (default): if cache lookup fails, fallback to Hugging Face download via `-hf`.
+    - `fail`: fail startup immediately when cache lookup fails.
 
 3. Finally, in the `LLAMA_SERVER_CMD_ARGS`, you can now simply add the other arguments you want to use, e.g.:
 
@@ -61,3 +69,14 @@ We will now integrate this into our workflow. Hang tight.
     ```
 
 4.  Done! The rest will be handled by the inference worker automatically. When the worker starts, it will resolve the cached model path and launch `llama-server` with the correct arguments.
+
+## Cache miss behavior
+
+When `LLAMA_CACHED_MODEL` is set but the cached file cannot be found:
+
+- If `LLAMA_CACHE_MISS_FALLBACK=download`, the worker falls back to downloading from Hugging Face:
+  - with `LLAMA_CACHED_GGUF_PATH`: `-hf <model> -hff <gguf_path>`
+  - without `LLAMA_CACHED_GGUF_PATH`: `-hf <model>` (llama.cpp default file selection)
+- If `LLAMA_CACHE_MISS_FALLBACK=fail`, the worker exits with an error.
+
+For production, it is strongly recommended to set `LLAMA_CACHED_GGUF_PATH` so fallback behavior stays deterministic.
