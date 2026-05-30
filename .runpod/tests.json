@@ -30,6 +30,7 @@
             }
         ],
         "allowedCudaVersions": [
+            "12.4",
             "12.8"
         ]
     }
