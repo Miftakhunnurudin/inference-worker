@@ -11,6 +11,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 WORKDIR /work
 ADD ./src /work
 
-RUN pip install -r requirements.txt && chmod +x start.sh
+RUN pip install --break-system-packages -r requirements.txt && chmod +x start.sh
 
 ENTRYPOINT ["/bin/sh", "-c", "/work/start.sh"]
