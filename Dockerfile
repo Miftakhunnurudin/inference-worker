@@ -10,9 +10,9 @@ FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 # Copy llama-server binary
 COPY --from=llama-cpp /app/llama-server /app/llama-server
 
-# Install Python 3.11
+# Install Python 3.11 + system deps (procps for pkill, libgomp for llama-server)
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    python3.11 python3.11-dev python3.11-distutils curl && \
+    python3.11 python3.11-dev python3.11-distutils curl procps libgomp1 && \
     ln -s /usr/bin/python3.11 /usr/bin/python && \
     curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
