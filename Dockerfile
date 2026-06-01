@@ -1,39 +1,44 @@
-# Use an official ggml-org/llama.cpp image as the base image
-FROM ghcr.io/ggml-org/llama.cpp:server-cuda12-b7903
+# Build llama.cpp with Qwen3.5 support + CUDA 12.4 compatibility
+# Supports all NVIDIA GPUs (RTX 4090, A5000, A40, H100, etc.)
 
-ENV PYTHONUNBUFFERED=1
+# === STAGE 1: Build llama.cpp from source ===
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS builder
 
-# Set up the working directory
-WORKDIR /
+ARG LLAMA_CPP_TAG=b8500
 
-RUN apt-get update --yes --quiet && DEBIAN_FRONTEND=noninteractive apt-get install --yes --quiet --no-install-recommends \
-    software-properties-common \
-    gpg-agent \
-    build-essential apt-utils \
-    && apt-get install --reinstall ca-certificates \
-    && add-apt-repository --yes ppa:deadsnakes/ppa && apt update --yes --quiet \
-    && DEBIAN_FRONTEND=noninteractive apt-get install --yes --quiet --no-install-recommends \
-    python3.11 \
-    python3.11-dev \
-    python3.11-distutils \
-    python3.11-lib2to3 \
-    python3.11-gdbm \
-    python3.11-tk \
-    bash \
-    curl && \
-    ln -s /usr/bin/python3.11 /usr/bin/python && \
-    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 && \
-    apt-get clean && \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    build-essential cmake curl git && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
-WORKDIR /work
+RUN git clone https://github.com/ggml-org/llama.cpp /llama && \
+    cd /llama && git checkout tags/${LLAMA_CPP_TAG} && \
+    cmake -B build \
+        -DGGML_CUDA=ON \
+        -DLLAMA_CUDA=ON \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build build --config Release -j $(nproc)
 
-# Add ./src as /work
+# === STAGE 2: Runtime image ===
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
+
+# Copy llama-server + shared libs
+COPY --from=builder /llama/build/bin/llama-server /app/llama-server
+COPY --from=builder /llama/build/src/libllama.so /usr/lib/
+COPY --from=builder /llama/build/ggml/src/libggml*.so* /usr/lib/
+COPY --from=builder /llama/build/ggml/src/ggml-cuda/libggml-cuda.so /usr/lib/
+
+# Install Python 3.11
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    python3.11 python3.11-dev python3.11-distutils curl && \
+    ln -s /usr/bin/python3.11 /usr/bin/python && \
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /work
 ADD ./src /work
 
-# Install runpod and its dependencies
-RUN pip install -r ./requirements.txt && chmod +x /work/start.sh
+RUN pip install -r requirements.txt && chmod +x start.sh
 
-# Set the entrypoint
+ENV LD_LIBRARY_PATH=/usr/lib
 ENTRYPOINT ["/bin/sh", "-c", "/work/start.sh"]
