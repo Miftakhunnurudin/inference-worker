@@ -1,18 +1,11 @@
 # llama.cpp server with Qwen3.5 support + CUDA 12.4
-# Uses pre-built ghcr.io image to avoid building from source
+# Uses pre-built ghcr.io image directly (includes all shared libs)
 
-# === STAGE 1: Get llama-server binary from pre-built image ===
-FROM ghcr.io/ggml-org/llama.cpp:server-cuda AS llama-cpp
+FROM ghcr.io/ggml-org/llama.cpp:server-cuda
 
-# === STAGE 2: Runtime image ===
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
-
-# Copy llama-server binary
-COPY --from=llama-cpp /app/llama-server /app/llama-server
-
-# Install Python 3.11 + system deps (procps for pkill, libgomp for llama-server)
+# Install Python 3.11 + system deps
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    python3.11 python3.11-dev python3.11-distutils curl procps libgomp1 && \
+    python3.11 python3.11-dev python3.11-distutils curl procps && \
     ln -s /usr/bin/python3.11 /usr/bin/python && \
     curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
