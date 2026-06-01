@@ -3,11 +3,9 @@
 
 FROM ghcr.io/ggml-org/llama.cpp:server-cuda
 
-# Install Python 3.11 + system deps
+# Install Python 3.12 + system deps (Ubuntu 24.04 default)
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    python3.11 python3.11-dev python3.11-distutils curl procps && \
-    ln -s /usr/bin/python3.11 /usr/bin/python && \
-    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 && \
+    python3 python3-dev python3-pip curl procps && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
