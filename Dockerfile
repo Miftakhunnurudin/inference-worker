@@ -16,8 +16,9 @@ RUN git clone https://github.com/ggml-org/llama.cpp /llama && \
         -DGGML_CUDA=ON \
         -DLLAMA_CUDA=ON \
         -DBUILD_SHARED_LIBS=ON \
-        -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build build --config Release -j $(nproc)
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CUDA_ARCHITECTURES="70;80;86;89;90" && \
+    cmake --build build --config Release -j $(nproc) --target llama-server
 
 # === STAGE 2: Runtime image ===
 FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
