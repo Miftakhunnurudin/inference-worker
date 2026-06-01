@@ -18,6 +18,7 @@ RUN git clone https://github.com/ggml-org/llama.cpp /llama && \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CUDA_ARCHITECTURES="70;80;86;89;90" && \
+    LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
     cmake --build build --config Release -j $(nproc) --target llama-server
 
 # === STAGE 2: Runtime image ===
