@@ -2,6 +2,7 @@
 
 # fail on error:
 set -e -o pipefail
+set -x # verbose: print every command before executing
 
 # This script starts the llama-server with the command line arguments
 # specified in the environment variable LLAMA_SERVER_CMD_ARGS, ensuring
