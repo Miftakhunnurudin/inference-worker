@@ -20,7 +20,7 @@ CACHE_MISS_FALLBACK="${LLAMA_CACHE_MISS_FALLBACK:-download}"
 
 resolve_cached_path() {
     local gguf_path="$1"
-    python ./find_cached.py "$LLAMA_CACHED_MODEL" "$gguf_path"
+    python3 ./find_cached.py "$LLAMA_CACHED_MODEL" "$gguf_path"
 }
 
 resolve_model_args() {
@@ -138,4 +138,4 @@ done
 
 echo "start.sh: llama-server is up and running, delegating to the handler script."
 
-python -u handler.py "$1"
+python3 -u handler.py "$1"
