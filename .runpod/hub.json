@@ -61,6 +61,15 @@
                     "default": 8,
                     "advanced": true
                 }
+            },
+            {
+                "key": "OPENAI_SERVED_MODEL_NAME_OVERRIDE",
+                "input": {
+                    "name": "OpenAI Served Model Name Override",
+                    "type": "string",
+                    "description": "Optional stable model name exposed from the OpenAI-compatible API. Useful for tools that expect a fixed OpenAI model identifier.",
+                    "advanced": true
+                }
             }
         ]
     }

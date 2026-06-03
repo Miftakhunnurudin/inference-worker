@@ -100,7 +100,7 @@ class LlamaCPPEngine:
 
         try:
             # Get model to use (defaults to first model in list of models)
-            model = client.models.list().data[0].id
+            model = openAIEngine._get_default_model_id()
         except Exception as e:
             yield {"error": f"failed to fetch models: {e}"}
             return
@@ -174,7 +174,22 @@ class LlamaCPPOpenAIEngine(LlamaCPPEngine):
         """
 
         load_dotenv()
+        self.served_model_name_override = os.getenv(
+            "OPENAI_SERVED_MODEL_NAME_OVERRIDE"
+        )
         print("LlamaCPPOpenAIEngine initialized")
+
+    def _get_default_model_id(self):
+        return client.models.list().data[0].id
+
+    def _normalize_openai_input_model(self, openai_input):
+        normalized_input = dict(openai_input)
+        requested_model = normalized_input.get("model")
+
+        if not requested_model or requested_model == self.served_model_name_override:
+            normalized_input["model"] = self._get_default_model_id()
+
+        return normalized_input
 
     async def generate(self, job_input):
         """
@@ -234,9 +249,16 @@ class LlamaCPPOpenAIEngine(LlamaCPPEngine):
         try:
             response = client.models.list()
 
+            data = []
+            for index, model in enumerate(response.data):
+                model_dict = model.to_dict()
+                if index == 0 and self.served_model_name_override:
+                    model_dict["id"] = self.served_model_name_override
+                data.append(model_dict)
+
             yield {
                 "object": "list",
-                "data": [model.to_dict() for model in response.data],
+                "data": data,
             }
         except Exception as e:
             yield {"error": str(e)}
@@ -278,6 +300,8 @@ class LlamaCPPOpenAIEngine(LlamaCPPEngine):
         """
 
         try:
+            openai_input = self._normalize_openai_input_model(openai_input)
+
             # Call openai.chat.completions.create or openai.completions.create
             # based on the route
             if chat:

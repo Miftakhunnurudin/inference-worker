@@ -25,9 +25,19 @@ class JobInput:
             raise ValueError("input must be a JSON object")
 
         self.llm_input = job.get("messages", job.get("prompt"))
-        self.stream = job.get("stream", False)
         self.openai_route = job.get("openai_route")
         self.openai_input = job.get("openai_input")
+
+        if self.openai_route == "/v1/models" and self.openai_input is None:
+            # RunPod can route model-list requests without a JSON body.
+            self.openai_input = {}
+
+        self.stream = job.get(
+            "stream",
+            self.openai_input.get("stream", False)
+            if isinstance(self.openai_input, dict)
+            else False,
+        )
 
         self.inference_kwargs = {
             k: v

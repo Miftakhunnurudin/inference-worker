@@ -44,6 +44,29 @@ class JobInputTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             job.validate()
 
+    def test_openai_models_route_allows_empty_body(self):
+        job = JobInput({"openai_route": "/v1/models"})
+
+        job.validate()
+
+        self.assertEqual(job.openai_input, {})
+
+    def test_openai_stream_flag_can_come_from_openai_input(self):
+        job = JobInput(
+            {
+                "openai_route": "/v1/chat/completions",
+                "openai_input": {
+                    "model": "vibe-model",
+                    "messages": [{"role": "user", "content": "Hi"}],
+                    "stream": True,
+                },
+            }
+        )
+
+        job.validate()
+
+        self.assertTrue(job.stream)
+
 
 if __name__ == "__main__":
     unittest.main()
